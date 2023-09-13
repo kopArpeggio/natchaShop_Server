@@ -17,11 +17,10 @@ exports.getAllProduct = async (req, res, next) => {
 
 exports.createProduct = async (req, res, next) => {
   const t = await sequelize.transaction();
-  const { product } = req?.body;
   try {
     const createdProduct = await Product.create(
       {
-        product,
+        ...req?.body,
       },
       {
         transaction: t,
