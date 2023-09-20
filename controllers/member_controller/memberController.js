@@ -1,4 +1,6 @@
-const { Member } = require("../../models");
+const { Member, sequelize } = require("../../models");
+const bcrypt = require("bcryptjs");
+
 
 exports.getAllMember = async (req, res, next) => {
   try {

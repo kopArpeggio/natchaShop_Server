@@ -42,11 +42,12 @@ exports.createProduct = async (req, res, next) => {
 
 exports.deleteProduct = async (req, res, next) => {
   const t = await sequelize.transaction();
-  const { id } = req?.params;
+  const { select } = req?.body;
+  console.log(req?.body?.select);
 
   try {
-    await Product.delete({
-      where: { id },
+    await Product.destroy({
+      where: { id: select },
       transaction: t,
     });
 
