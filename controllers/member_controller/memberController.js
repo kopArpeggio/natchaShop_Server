@@ -1,6 +1,6 @@
 const { Member, sequelize } = require("../../models");
 const bcrypt = require("bcryptjs");
-
+const { Op } = require("sequelize");
 
 exports.getAllMember = async (req, res, next) => {
   try {
@@ -21,7 +21,7 @@ exports.createMember = async (req, res, next) => {
 
   try {
     const duplicate = await Member.findOne({
-      where: { username },
+      where: { [Op.or]: { username, email: req?.body?.email } },
     });
 
     if (duplicate) {
@@ -78,6 +78,8 @@ exports.updateMemberById = async (req, res, next) => {
   const t = await sequelize.transaction();
 
   const { id } = req?.params;
+
+  console.log(req?.params);
 
   try {
     const exist = await Member.findOne({ where: { id } });

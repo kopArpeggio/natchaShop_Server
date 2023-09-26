@@ -1,4 +1,5 @@
-const { db, Member } = require("../../models");
+const { Member } = require("../../models");
+const db = require("../../models");
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -6,7 +7,7 @@ const { createToken } = require("../../middleware/utils");
 
 exports.migrate = async (req, res, next) => {
   try {
-    db.sequelize.sync({ alter: true }).then(() => {
+    await db.sequelize.sync({ alter: true }).then(() => {
       res.status(200).send({ message: "Migrate Succesful" });
     });
   } catch (error) {
@@ -16,11 +17,9 @@ exports.migrate = async (req, res, next) => {
 };
 
 exports.login = async (req, res, next) => {
+  const { username, password } = req?.body;
   try {
-    const { username, password } = req?.body;
-    var user;
-
-    user = await Member.findOne({
+    const user = await Member.findOne({
       where: { username },
     });
 
@@ -38,9 +37,7 @@ exports.login = async (req, res, next) => {
       throw error;
     }
 
-    console.log(process.env.JWT_SECRET);
-
-    const token = createToken(user?.id, user?.username);
+    const token = createToken(user?.id, user?.username, user?.role);
 
     const { exp } = jwt.decode(token);
 
@@ -51,6 +48,18 @@ exports.login = async (req, res, next) => {
     });
   } catch (error) {
     error.controller = "login";
+    next(error);
+  }
+};
+
+exports.getUser = async (req, res, next) => {
+  try {
+    res.status(200).send({
+      message: "connect to controller and Route Succesful!",
+      data: req?.user,
+    });
+  } catch (error) {
+    error.controller = "getUser";
     next(error);
   }
 };

@@ -6,6 +6,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: false,
       },
+      email: {
+        type: DataTypes.STRING,
+        allowNull: false,
+      },
       phone: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -39,5 +43,14 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "member",
     }
   );
+
+  Member.associate = (models) => {
+    Member.hasMany(models.Order, {
+      foreignKey: "orderBy",
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
+    });
+  };
+
   return Member;
 };

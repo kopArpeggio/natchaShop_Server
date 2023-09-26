@@ -1,5 +1,8 @@
 const { sequelize, Product } = require("../../models");
 const { Op } = require("sequelize");
+const uuidv4 = require("uuid");
+const path = require("path");
+const fs = require("fs");
 
 exports.getAllProduct = async (req, res, next) => {
   try {
@@ -17,10 +20,18 @@ exports.getAllProduct = async (req, res, next) => {
 
 exports.createProduct = async (req, res, next) => {
   const t = await sequelize.transaction();
+  const { picture } = req?.files;
   try {
+    const ext = path.extname(picture?.name).toLowerCase();
+
+    const filename = `${uuidv4.v4()}${ext}`;
+
+    picture?.mv(`${__dirname}/../../assets/img/${filename}`);
+
     const createdProduct = await Product.create(
       {
         ...req?.body,
+        picture: filename,
       },
       {
         transaction: t,
@@ -43,7 +54,6 @@ exports.createProduct = async (req, res, next) => {
 exports.deleteProduct = async (req, res, next) => {
   const t = await sequelize.transaction();
   const { select } = req?.body;
-  console.log(req?.body?.select);
 
   try {
     await Product.destroy({
@@ -64,10 +74,29 @@ exports.deleteProduct = async (req, res, next) => {
 exports.updateProduct = async (req, res, next) => {
   const t = await sequelize.transaction();
   const { id } = req?.params;
+  const { picture } = req?.files;
+
   try {
+    const product = await Product.findOne({ where: { id } });
+    if (product?.picture) {
+      fs.unlink(`${__dirname}/../../assets/img/${product?.picture}`, (err) => {
+        if (err) {
+          console.log(err);
+          return;
+        }
+      });
+    }
+
+    const ext = path.extname(picture?.name).toLowerCase();
+
+    const filename = `${uuidv4.v4()}${ext}`;
+
+    picture?.mv(`${__dirname}/../../assets/img/${filename}`);
+
     await Product.update(
       {
         ...req?.body,
+        picture: filename,
       },
       { where: { id }, transaction: t }
     );
@@ -78,6 +107,23 @@ exports.updateProduct = async (req, res, next) => {
   } catch (error) {
     await t.rollback();
     error.controller = "updateProduct";
+    next(error);
+  }
+};
+
+exports.getProductById = async (req, res, next) => {
+  const { id } = req?.params;
+
+  try {
+    const product = await Product.findOne({
+      where: { id },
+    });
+
+    res
+      .status(200)
+      .send({ message: "Get Product By Id Succesful", data: product });
+  } catch (error) {
+    error.controller = " getProductById";
     next(error);
   }
 };
