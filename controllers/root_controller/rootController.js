@@ -1,4 +1,4 @@
-const { Member } = require("../../models");
+const { Member, sequelize } = require("../../models");
 const db = require("../../models");
 
 const bcrypt = require("bcryptjs");
@@ -6,11 +6,31 @@ const jwt = require("jsonwebtoken");
 const { createToken } = require("../../middleware/utils");
 
 exports.migrate = async (req, res, next) => {
+  const t = await sequelize.transaction();
+
   try {
+    const member = await Member.findOne({ where: { username: "admin" } });
+
+    if (!member) {
+      const hasedPassword = await bcrypt.hash("admin", 10);
+
+      await Member.create({
+        username: "admin",
+        name: "Admin",
+        password: hasedPassword,
+        email: "admin@mail.com",
+        phone: "admin",
+        role: "admin",
+      });
+    }
+
+    await t.commit();
+
     await db.sequelize.sync({ alter: true }).then(() => {
       res.status(200).send({ message: "Migrate Succesful" });
     });
   } catch (error) {
+    await t.rollback();
     error.controller = "migrate";
     next(error);
   }

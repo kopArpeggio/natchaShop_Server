@@ -2,6 +2,12 @@ module.exports = (sequelize, DataTypes) => {
   const OrderDetail = sequelize.define(
     "OrderDetail",
     {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        allowNull: false,
+        primaryKey: true,
+      },
       quantity: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -14,7 +20,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       timestamps: true,
       underscored: true,
-      paranoid: true,
+      paranoid: false,
       tableName: "orderDetail",
     }
   );
@@ -22,13 +28,13 @@ module.exports = (sequelize, DataTypes) => {
   OrderDetail.associate = (models) => {
     OrderDetail.belongsTo(models.Order, {
       foreignKey: "order_id",
-      onUpdate: "RESTRICT",
-      onDelete: "RESTRICT",
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE",
     });
     OrderDetail.belongsTo(models.Product, {
       foreignKey: "product_id",
-      onUpdate: "RESTRICT",
-      onDelete: "RESTRICT",
+      onUpdate: "CASCADE",
+      onDelete: "CASCADE",
     });
   };
 

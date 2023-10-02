@@ -2,6 +2,12 @@ module.exports = (sequelize, DataTypes) => {
   const Member = sequelize.define(
     "Member",
     {
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
+        allowNull: false,
+        primaryKey: true,
+      },
       name: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -39,14 +45,14 @@ module.exports = (sequelize, DataTypes) => {
     {
       timestamps: true,
       underscored: true,
-      paranoid: true,
+      paranoid: false,
       tableName: "member",
     }
   );
 
   Member.associate = (models) => {
     Member.hasMany(models.Order, {
-      foreignKey: "orderBy",
+      foreignKey: "order_by",
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     });

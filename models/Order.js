@@ -2,10 +2,13 @@ module.exports = (sequelize, DataTypes) => {
   const Order = sequelize.define(
     "Order",
     {
-      orderBy: {
-        type: DataTypes.STRING,
+      id: {
+        type: DataTypes.INTEGER,
+        autoIncrement: true,
         allowNull: false,
+        primaryKey: true,
       },
+
       totalPrice: {
         type: DataTypes.STRING,
         allowNull: false,
@@ -18,7 +21,7 @@ module.exports = (sequelize, DataTypes) => {
     {
       timestamps: true,
       underscored: true,
-      paranoid: true,
+      paranoid: false,
       tableName: "order",
     }
   );
@@ -31,14 +34,22 @@ module.exports = (sequelize, DataTypes) => {
   //     });
   //   };
 
+  // Order.associate = (models) => {
+  //   Order.hasMany(models.OrderDetail, {
+  //     foreignKey: "order_id",
+  //     onDelete: "CASCADE",
+  //     onUpdate: "CASCADE",
+  //   });
+  // };
   Order.associate = (models) => {
     Order.hasMany(models.OrderDetail, {
-      foreignKey: "order_id", // foreign key in OrderDetail that associates it with Order
-      onDelete: "CASCADE", // or any other action on delete
-      onUpdate: "CASCADE", // or any other action on update
+      foreignKey: "order_id",
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
     });
+
     Order.belongsTo(models.Member, {
-      foreignKey: "orderBy",
+      foreignKey: "order_by",
       onDelete: "CASCADE",
       onUpdate: "CASCADE",
     });
