@@ -156,7 +156,7 @@ exports.updateProduct = async (req, res, next) => {
   // กำหนด Transaction เพื่อใช้ดักจับ error
   const t = await sequelize.transaction();
   const { id } = req?.params;
-  if (req?.files) {
+  if (req?.files?.picture) {
     var { picture } = req?.files;
   }
 
@@ -164,23 +164,28 @@ exports.updateProduct = async (req, res, next) => {
     // ค้นหาสินค้าตาม id ที่กรอก
     const product = await Product.findOne({ where: { id } });
 
-    // ถ้ามีรูปภาพเดิมอยู่แล้วให้ลบออก
-    if (product?.picture) {
-      fs.unlink(`${__dirname}/../../assets/img/${product?.picture}`, (err) => {
-        if (err) {
-          console.log(err);
-          return;
-        }
-      });
+    if (picture) {
+      // ถ้ามีรูปภาพเดิมอยู่แล้วให้ลบออก
+      if (product?.picture !== picture) {
+        fs.unlink(
+          `${__dirname}/../../assets/img/${product?.picture}`,
+          (err) => {
+            if (err) {
+              console.log(err);
+              return;
+            }
+          }
+        );
 
-      // นามสกุลไฟล์
-      const ext = path.extname(picture?.name).toLowerCase();
+        // นามสกุลไฟล์
+        const ext = path.extname(picture?.name).toLowerCase();
 
-      // สุ่มชื่อไฟล์
-      var filename = `${uuidv4.v4()}${ext}`;
+        // สุ่มชื่อไฟล์
+        var filename = `${uuidv4.v4()}${ext}`;
 
-      // ย้ายไฟล์ไปที่ server
-      picture?.mv(`${__dirname}/../../assets/img/${filename}`);
+        // ย้ายไฟล์ไปที่ server
+        picture?.mv(`${__dirname}/../../assets/img/${filename}`);
+      }
     }
 
     // update สินค้า ตามข้อมูลที่กรอกไป
