@@ -156,7 +156,9 @@ exports.updateProduct = async (req, res, next) => {
   // กำหนด Transaction เพื่อใช้ดักจับ error
   const t = await sequelize.transaction();
   const { id } = req?.params;
-  const { picture } = req?.files;
+  if (req?.files) {
+    var { picture } = req?.files;
+  }
 
   try {
     // ค้นหาสินค้าตาม id ที่กรอก
@@ -170,16 +172,16 @@ exports.updateProduct = async (req, res, next) => {
           return;
         }
       });
+
+      // นามสกุลไฟล์
+      const ext = path.extname(picture?.name).toLowerCase();
+
+      // สุ่มชื่อไฟล์
+      var filename = `${uuidv4.v4()}${ext}`;
+
+      // ย้ายไฟล์ไปที่ server
+      picture?.mv(`${__dirname}/../../assets/img/${filename}`);
     }
-
-    // นามสกุลไฟล์
-    const ext = path.extname(picture?.name).toLowerCase();
-
-    // สุ่มชื่อไฟล์
-    const filename = `${uuidv4.v4()}${ext}`;
-
-    // ย้ายไฟล์ไปที่ server
-    picture?.mv(`${__dirname}/../../assets/img/${filename}`);
 
     // update สินค้า ตามข้อมูลที่กรอกไป
     await Product.update(
