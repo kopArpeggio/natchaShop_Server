@@ -16,10 +16,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.DECIMAL,
         allowNull: false,
       },
-      quantity: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
       picture: {
         type: DataTypes.STRING,
         allowNull: true,
@@ -32,6 +28,14 @@ module.exports = (sequelize, DataTypes) => {
       tableName: "product",
     }
   );
+
+  Product.associate = (models) => {
+    Product.belongsTo(models.Size, {
+      foreignKey: "size_id",
+      onDelete: "CASCADE",
+      onUpdate: "CASCADE",
+    });
+  };
 
   return Product;
 };

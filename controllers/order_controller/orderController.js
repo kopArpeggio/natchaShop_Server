@@ -4,6 +4,7 @@ const {
   OrderDetail,
   Member,
   Product,
+  Size,
 } = require("../../models");
 const { Op } = require("sequelize");
 const uuidv4 = require("uuid");
@@ -64,6 +65,40 @@ exports.createOrder = async (req, res, next) => {
       .filter((item) => item)
       .map((item) => ({ ...item }));
 
+    const check = bulkCreateData.map(async (item) => {
+      // const c = await Size.findOne({
+      //   where: { id: item?.size_id },
+      // });
+      const c = await Size.findOne({
+        where: {
+          product_id: item?.product_id,
+          size: item?.size,
+        },
+      });
+
+      if (!c) {
+        const error = new Error("This Product not exist !");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      if (c?.stock <= 0 || c?.stock < parseInt(item?.quantity)) {
+        const error = new Error("Don't have enough Product");
+        error.statusCode = 400;
+        throw error;
+      }
+
+      const result = parseInt(c?.stock - item?.quantity);
+
+      await Size?.update(
+        { stock: result },
+        {
+          transaction: t,
+          where: { id: c?.id },
+        }
+      );
+    });
+
     // สร้าง order detail
     await OrderDetail.bulkCreate(bulkCreateData);
 
@@ -71,7 +106,7 @@ exports.createOrder = async (req, res, next) => {
     await t.commit();
 
     // ส่ง status 200 กลับไป
-    await res.status(200);
+    await res.status(200).send({ data: check });
   } catch (error) {
     // Rollback Transaction
     await t.rollback();
@@ -146,5 +181,27 @@ exports.getOrderById = async (req, res, next) => {
     error.controller = "getOrderById";
     // ส่งค่า error กลับไป
     next(error);
+  }
+};
+
+exports.updateOrderById = async (req, res, next) => {
+  console.log(req?.body);
+
+  const t = await sequelize.transaction();
+  try {
+    await Order.update(
+      {
+        shippingTrack: req?.body?.shippingTrack,
+      },
+      {
+        where: { id: req?.body?.id },
+      }
+    );
+
+    await t.commit();
+    res?.status(200).send({ message: "Update Order By Id Succesful !" });
+  } catch (error) {
+    error.controller = "updateOrder";
+    await t.rollback();
   }
 };

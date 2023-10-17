@@ -4,7 +4,7 @@ const passportJWT = require("../../middleware/passportJWT");
 
 const router = express.Router();
 
-router.get("/get-all-product", productController.getAllProduct);
+router.get("/get-all-product/:search", productController.getAllProduct);
 router.put("/update-product-by-id/:id", productController.updateProduct);
 router.post("/delete-product-by-id", productController.deleteProduct);
 router.post("/create-product", productController.createProduct);

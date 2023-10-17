@@ -16,5 +16,10 @@ router.get(
   [passportJWT.isLogin],
   orderController?.getOrderById
 );
+router.put(
+  "/update-order-by-id",
+  [passportJWT.isLogin],
+  orderController?.updateOrderById
+);
 
 module.exports = router;

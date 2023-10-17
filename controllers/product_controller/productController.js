@@ -1,4 +1,4 @@
-const { sequelize, Product } = require("../../models");
+const { sequelize, Product, Size } = require("../../models");
 const { Op } = require("sequelize");
 const uuidv4 = require("uuid");
 const path = require("path");
@@ -6,9 +6,30 @@ const fs = require("fs");
 
 //เรียกดูข้อมูลสินค้าทั้งหมด
 exports.getAllProduct = async (req, res, next) => {
+  console.log(req?.params);
+
+  if (req?.params) {
+    var { search } = req?.params;
+  }
+
+  console.log(search);
+
   try {
     // ค้นหาสินค้าทั้งหมด
-    const products = await Product.findAll();
+
+    var products;
+
+    if (search === "undefined") {
+      products = await Product.findAll();
+    } else {
+      products = await Product.findAll({
+        where: {
+          name: {
+            [Op.like]: `%${search?.toLowerCase()}%`,
+          },
+        },
+      });
+    }
 
     // ส่งข้อมูล products ไป
     res.status(200).send({
@@ -33,7 +54,7 @@ exports.searchProduct = async (req, res, next) => {
     const products = await Product.findAll({
       where: {
         name: {
-          [Op.iLike]: `%${name}%`,
+          [Op.like]: `%${name?.toLowerCase()}%`,
         },
       },
     });
@@ -82,23 +103,51 @@ exports.getAllProductById = async (req, res, next) => {
 exports.createProduct = async (req, res, next) => {
   //กำหนด Transaction เพื่อใช้ดักจับ error
   const t = await sequelize.transaction();
-  const { picture } = req?.files;
+
+  if (req?.files) {
+    var { picture } = req?.files;
+  }
+
+  console.log(req?.body);
+  const { s, m, l, x, xl, freeSize } = req?.body;
+
   try {
-    //เก็บนามสกุลไฟล์
-    const ext = path.extname(picture?.name).toLowerCase();
+    if (picture) {
+      //เก็บนามสกุลไฟล์
+      const ext = path.extname(picture?.name).toLowerCase();
 
-    //สุ่มชื่อไฟล์ใหม่
-    const filename = `${uuidv4.v4()}${ext}`;
+      //สุ่มชื่อไฟล์ใหม่
+      var filename = `${uuidv4.v4()}${ext}`;
 
-    //เก็บรูปไว้ในฝั่ง server
-    picture?.mv(`${__dirname}/../../assets/img/${filename}`);
+      //เก็บรูปไว้ในฝั่ง server
+      picture?.mv(`${__dirname}/../../assets/img/${filename}`);
+    }
 
     //เพิ่มสินค้า และเก็บชื่อรูปสินค้าไว้
+
     const createdProduct = await Product.create(
       {
         ...req?.body,
         picture: filename,
       },
+      {
+        transaction: t,
+      }
+    );
+
+    const createSize = await Size.bulkCreate(
+      [
+        { product_id: createdProduct?.id, size: "s", stock: s || 0 },
+        { product_id: createdProduct?.id, size: "m", stock: m || 0 },
+        { product_id: createdProduct?.id, size: "l", stock: l || 0 },
+        { product_id: createdProduct?.id, size: "x", stock: x || 0 },
+        { product_id: createdProduct?.id, size: "xl", stock: xl || 0 },
+        {
+          product_id: createdProduct?.id,
+          size: "freeSize",
+          stock: freeSize,
+        },
+      ],
       {
         transaction: t,
       }
@@ -153,11 +202,41 @@ exports.deleteProduct = async (req, res, next) => {
 
 // อัพเดดสินค้าโดยใช้ ID
 exports.updateProduct = async (req, res, next) => {
+  // console.log("Product Sizes:", productSizes[0]);
+
   // กำหนด Transaction เพื่อใช้ดักจับ error
   const t = await sequelize.transaction();
+  // console.log(req?.body);
   const { id } = req?.params;
   if (req?.files?.picture) {
     var { picture } = req?.files;
+  }
+  console.log(req?.body);
+
+  const productData = req?.body; // Assuming req.body contains the provided product size data
+
+  // Extract product sizes
+  var productSizes = [];
+  let index = 0;
+
+  while (productData[`productSize[${index}][id]`]) {
+    const productSize = {
+      id: productData[`productSize[${index}][id]`],
+      size: productData[`productSize[${index}][size]`],
+      stock: productData[`productSize[${index}][stock]`],
+      s: productData[`productSize[${index}][s]`],
+      m: productData[`productSize[${index}][m]`],
+      l: productData[`productSize[${index}][l]`],
+      x: productData[`productSize[${index}][x]`],
+      xl: productData[`productSize[${index}][xl]`],
+      freeSize: productData[`productSize[${index}][freeSize]`],
+      createdAt: productData[`productSize[${index}][createdAt]`],
+      updatedAt: productData[`productSize[${index}][updatedAt]`],
+      productId: productData[`productSize[${index}][product_id]`],
+    };
+
+    productSizes.push(productSize);
+    index++;
   }
 
   try {
@@ -188,13 +267,55 @@ exports.updateProduct = async (req, res, next) => {
       }
     }
 
+    const size = await Size.findAll({
+      where: {
+        product_id: id,
+      },
+      raw: true,
+    });
+
+    size
+      .filter((item) => item)
+      .map(async (item) => {
+        await Size.update(
+          {
+            stock:
+              item?.size == "s"
+                ? req?.body?.stock1
+                : item?.size == "m"
+                ? req?.body?.stock2
+                : item?.size == "l"
+                ? req?.body?.stock3
+                : item?.size == "x"
+                ? req?.body?.stock4
+                : item?.size == "xl"
+                ? req?.body?.stock5
+                : item?.size == "freeSize"
+                ? req?.body?.stock6
+                : "",
+          },
+          {
+            where: { id: item?.id },
+            transaction: t,
+          }
+        );
+      });
+
+    // await Size.bulkCreate(dataArray, {
+    //   fields: ["id", "name", "address"],
+    //   updateOnDuplicate: ["name"],
+    // });
+
     // update สินค้า ตามข้อมูลที่กรอกไป
     await Product.update(
       {
         ...req?.body,
         picture: filename,
       },
-      { where: { id }, transaction: t }
+      {
+        where: { id },
+        transaction: t,
+      }
     );
 
     // Commit Transaction
@@ -222,10 +343,16 @@ exports.getProductById = async (req, res, next) => {
       where: { id },
     });
 
+    const size = await Size.findAll({
+      where: { product_id: id },
+    });
+
     // ส่งข้อมูลกลับ
-    res
-      .status(200)
-      .send({ message: "Get Product By Id Succesful", data: product });
+    res.status(200).send({
+      message: "Get Product By Id Succesful",
+      data: product,
+      size,
+    });
   } catch (error) {
     // กำหนดค่าให้ error
     error.controller = " getProductById";

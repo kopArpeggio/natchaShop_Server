@@ -9,20 +9,20 @@ exports.migrate = async (req, res, next) => {
   const t = await sequelize.transaction();
 
   try {
-    const member = await Member.findOne({ where: { username: "admin" } });
+    // const member = await Member.findOne({ where: { username: "admin" } });
 
-    if (!member) {
-      const hasedPassword = await bcrypt.hash("admin", 10);
+    // if (!member) {
+    //   const hasedPassword = await bcrypt.hash("admin", 10);
 
-      await Member.create({
-        username: "admin",
-        name: "Admin",
-        password: hasedPassword,
-        email: "admin@mail.com",
-        phone: "admin",
-        role: "admin",
-      });
-    }
+    //   await Member.create({
+    //     username: "admin",
+    //     name: "Admin",
+    //     password: hasedPassword,
+    //     email: "admin@mail.com",
+    //     phone: "admin",
+    //     role: "admin",
+    //   });
+    // }
 
     await t.commit();
 
