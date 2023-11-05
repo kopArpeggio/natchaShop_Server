@@ -29,13 +29,6 @@ module.exports = (sequelize, DataTypes) => {
     }
   );
 
-  Product.associate = (models) => {
-    Product.belongsTo(models.Size, {
-      foreignKey: "size_id",
-      onDelete: "CASCADE",
-      onUpdate: "CASCADE",
-    });
-  };
 
   return Product;
 };

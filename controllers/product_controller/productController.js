@@ -360,3 +360,19 @@ exports.getProductById = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.getNewProduct = async (req, res, next) => {
+  try {
+    const product = await Product.findAll({
+      limit: 10, // Limit the result to 10 records
+      order: [["id", "DESC"]], // Order by the 'id' column in descending order
+    });
+
+    res
+      .status(200)
+      .send({ data: product, message: "Get Newest Product Succesful!" });
+  } catch (error) {
+    error.controller = "getNewProduct";
+    next(error);
+  }
+};

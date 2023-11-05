@@ -185,8 +185,6 @@ exports.getOrderById = async (req, res, next) => {
 };
 
 exports.updateOrderById = async (req, res, next) => {
-  console.log(req?.body);
-
   const t = await sequelize.transaction();
   try {
     await Order.update(
@@ -203,5 +201,69 @@ exports.updateOrderById = async (req, res, next) => {
   } catch (error) {
     error.controller = "updateOrder";
     await t.rollback();
+    next(error);
+  }
+};
+
+exports.getOrderByUser = async (req, res, next) => {
+  try {
+    const order = await Order.findAll({ where: { order_by: req?.user?.id } });
+
+    res
+      ?.status(200)
+      .send({ message: "Get Order By User Id Successful !", data: order });
+  } catch (error) {
+    error.controller = "getOrderByUser";
+    next(error);
+  }
+};
+
+exports.getOrderDetailByOrderId = async (req, res, next) => {
+  try {
+    const orderDetail = await OrderDetail.findAll({
+      where: {
+        order_id: req?.body?.orderId,
+      },
+      include: [
+        {
+          model: Product,
+        },
+      ],
+    });
+
+    res.status(200).send({
+      data: orderDetail,
+      message: "Get Order Detail By Order Id Successful !",
+    });
+  } catch (error) {
+    error.controller = "getOrderDetailByOrderId";
+    next(error);
+  }
+};
+exports.getOrderDetailByOrderIdArray = async (req, res, next) => {
+  try {
+    const order = await Order.findAll({ where: { order_by: req?.user?.id } });
+    const orderId = order.map((order) => order?.id);
+
+    const orderDetail = await OrderDetail.findAll({
+      where: {
+        order_id: {
+          [Op.in]: orderId,
+        },
+      },
+      include: [
+        {
+          model: Product,
+        },
+      ],
+    });
+
+    res.status(200).send({
+      data: orderDetail,
+      message: "Get Order Detail By Order Id Array Successful !",
+    });
+  } catch (error) {
+    error.controller = "getOrderDetailByOrderIdArray";
+    next(error);
   }
 };
