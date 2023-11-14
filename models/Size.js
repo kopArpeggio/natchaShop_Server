@@ -28,10 +28,6 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
-      x: {
-        type: DataTypes.INTEGER,
-        allowNull: false,
-      },
       xl: {
         type: DataTypes.INTEGER,
         allowNull: false,
